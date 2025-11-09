@@ -2,7 +2,9 @@ package fit
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/muktihari/fit/cmd/fitconv/fitcsv"
 	"github.com/muktihari/fit/decoder"
 	"github.com/muktihari/fit/proto"
 )
@@ -507,4 +510,77 @@ func ConvertFieldsToSession(fields []proto.Field, fileName string) (*Session, er
 	}
 	decoder := &FitDecoder{FilePath: fileName}
 	return decoder.ConvertDataMapToSession(dataMap)
+}
+
+// ConvertFitToCSV 将 FIT 文件转换为 CSV 格式
+// 参数:
+//   - file: multipart.File 或任何实现 io.Reader 的上传文件
+//   - options: 可选的 fitcsv 配置选项
+//
+// 返回:
+//   - []byte: CSV 格式的数据
+//   - error: 错误信息
+func (s *DecodeService) ConvertFitToCSV(file io.Reader, options ...fitcsv.Option) ([]byte, error) {
+	// 创建一个 bytes.Buffer 作为 CSV 输出目标
+	var csvBuffer bytes.Buffer
+
+	// 创建 FIT 到 CSV 转换器
+	conv := fitcsv.NewFITToCSVConv(&csvBuffer, options...)
+
+	// 创建 FIT decoder 并解码文件
+	dec := decoder.New(file)
+	fitData, err := dec.Decode()
+	if err != nil {
+		return nil, fmt.Errorf("解码FIT文件失败: %w", err)
+	}
+
+	// 遍历所有消息并通知转换器
+	for _, mesg := range fitData.Messages {
+		// 通知转换器接收到新消息
+		conv.OnMesg(mesg)
+	}
+
+	// 等待所有事件处理完成
+	conv.Wait()
+
+	// 检查是否有错误
+	if err := conv.Err(); err != nil {
+		return nil, fmt.Errorf("CSV转换过程中出错: %w", err)
+	}
+
+	return csvBuffer.Bytes(), nil
+}
+
+// ConvertFitToCSVWithOptions 将 FIT 文件转换为 CSV,支持自定义选项
+// 参数:
+//   - file: multipart.File 或任何实现 io.Reader 的上传文件
+//   - printGPSInDegrees: 是否以度数打印GPS坐标 (true=度数, false=semicircles)
+//   - printOnlyValidValues: 是否只打印有效值 (跳过无效/空值)
+//   - trimTrailingCommas: 是否修剪行尾的逗号
+//
+// 返回:
+//   - []byte: CSV 格式的数据
+//   - error: 错误信息
+func (s *DecodeService) ConvertFitToCSVWithOptions(
+	file io.Reader,
+	printGPSInDegrees bool,
+	printOnlyValidValues bool,
+	trimTrailingCommas bool,
+) ([]byte, error) {
+	// 构建选项列表
+	var options []fitcsv.Option
+
+	if printGPSInDegrees {
+		options = append(options, fitcsv.WithPrintGPSPositionInDegrees())
+	}
+
+	if printOnlyValidValues {
+		options = append(options, fitcsv.WithPrintOnlyValidValue())
+	}
+
+	if trimTrailingCommas {
+		options = append(options, fitcsv.WithTrimTrailingCommas())
+	}
+
+	return s.ConvertFitToCSV(file, options...)
 }

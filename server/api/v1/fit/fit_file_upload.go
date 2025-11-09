@@ -1,6 +1,8 @@
 package fit
 
 import (
+	"path/filepath"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/service"
@@ -10,6 +12,8 @@ import (
 )
 
 type FitFileUploadApi struct{}
+
+const FIT_FILE_FIELD = "file"
 
 var fitService = service.ServiceGroupApp.FitServiceGroup
 
@@ -34,7 +38,7 @@ func (f *FitFileUploadApi) UploadFitFile(c *gin.Context) {
 	)
 
 	// 2. 接收文件
-	file, header, err := c.Request.FormFile("file")
+	file, header, err := c.Request.FormFile(FIT_FILE_FIELD)
 	if err != nil {
 		global.GVA_LOG.Error("接收FIT文件失败!", zap.Error(err))
 		response.FailWithMessage("接收文件失败", c)
@@ -84,4 +88,38 @@ func (f *FitFileUploadApi) GetSessionDetail(c *gin.Context) {
 	// TODO: 实现获取会话详情逻辑
 	id := c.Param("id")
 	response.OkWithMessage("获取会话详情: "+id, c)
+}
+
+// ConvertFitToCSV 将 FIT 文件转换为 CSV 格式
+// @Tags      FIT
+// @Summary   将FIT文件转换为CSV格式
+// @Description 上传FIT文件并将其内容转换为CSV格式返回
+// @Security  ApiKeyAuth
+// @accept    multipart/form-data
+// @Produce   text/csv
+// @Param     file  formData  file  true  "FIT运动数据文件"
+// @Success   200   {file}    file  "转换成功，返回CSV文件"
+// @Failure   400   {object}  response.Response{msg=string}  "转换失败"
+// @Router    /fit/convert_to_csv [post]
+func (f *FitFileUploadApi) ConvertFitToCSV(c *gin.Context) {
+	// 1. 接收文件
+	file, header, err := c.Request.FormFile(FIT_FILE_FIELD)
+	if err != nil {
+		global.GVA_LOG.Error("接收FIT文件失败!", zap.Error(err))
+		response.FailWithMessage("接收文件失败", c)
+		return
+	}
+	defer file.Close()
+
+	// 2. 调用 DecodeService 转换为 CSV
+	csvData, err := fitService.DecodeService.ConvertFitToCSV(file)
+	if err != nil {
+		global.GVA_LOG.Error("转换FIT文件为CSV失败!", zap.Error(err))
+		response.FailWithMessage("转换文件失败: "+err.Error(), c)
+		return
+	}
+
+	// 3. 设置响应头并返回 CSV 文件
+	c.Header("Content-Disposition", "attachment; filename="+filepath.Base(header.Filename)+".csv")
+	c.Data(200, "text/csv", csvData)
 }

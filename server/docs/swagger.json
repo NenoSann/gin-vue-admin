@@ -3015,6 +3015,61 @@
                 }
             }
         },
+        "/fit/convert_to_csv": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "上传FIT文件并将其内容转换为CSV格式返回",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "text/csv"
+                ],
+                "tags": [
+                    "FIT"
+                ],
+                "summary": "将FIT文件转换为CSV格式",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "FIT运动数据文件",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "转换成功，返回CSV文件",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "转换失败",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "msg": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/fit/session/{id}": {
             "get": {
                 "security": [

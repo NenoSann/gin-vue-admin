@@ -3837,6 +3837,38 @@ paths:
       summary: 上传文件示例
       tags:
       - ExaFileUploadAndDownload
+  /fit/convert_to_csv:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传FIT文件并将其内容转换为CSV格式返回
+      parameters:
+      - description: FIT运动数据文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - text/csv
+      responses:
+        "200":
+          description: 转换成功，返回CSV文件
+          schema:
+            type: file
+        "400":
+          description: 转换失败
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 将FIT文件转换为CSV格式
+      tags:
+      - FIT
   /fit/session/{id}:
     get:
       consumes:
