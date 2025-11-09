@@ -2,6 +2,7 @@ import './style/element_visiable.scss'
 import 'element-plus/theme-chalk/dark/css-vars.css'
 import 'uno.css'
 import { createApp } from 'vue'
+import type { App as AppInstance } from 'vue'
 import ElementPlus from 'element-plus'
 
 import 'element-plus/dist/index.css'
@@ -13,16 +14,15 @@ import '@/permission'
 import run from '@/core/gin-vue-admin.js'
 import auth from '@/directive/auth'
 import clickOutSide from '@/directive/clickOutSide'
-import { store } from '@/pinia'
+import { store } from '@/pinia/index'
 import App from './App.vue'
 // import { initErrorHandler } from '@/core/error-handel'
 
 
-const app = createApp(App)
+const app: AppInstance = createApp(App)
 
 // 注入错误处理捕获
 // initErrorHandler(app)
-app.config.productionTip = false
 
 app
   .use(run)

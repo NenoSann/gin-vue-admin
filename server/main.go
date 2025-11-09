@@ -19,6 +19,8 @@ import (
 // @Tag.Name        Base
 // @Tag.Name        SysUser
 // @Tag.Description 用户
+// @Tag.Name        FIT
+// @Tag.Description FIT运动数据管理
 
 // @title                       Gin-Vue-Admin Swagger API接口文档
 // @version                     v2.8.6

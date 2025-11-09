@@ -1,3 +1,4 @@
+import type { ConfigEnv, UserConfig } from 'vite'
 import legacyPlugin from '@vitejs/plugin-legacy'
 import { viteLogo } from './src/core/config'
 import Banner from 'vite-plugin-banner'
@@ -9,10 +10,11 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import VueFilePathPlugin from './vitePlugin/componentName/index.js'
 import { svgBuilder } from 'vite-auto-import-svg'
 import { AddSecret } from './vitePlugin/secret'
+import AutoImport from 'unplugin-auto-import/vite'
 import UnoCSS from '@unocss/vite'
 
 // @see https://cn.vitejs.dev/config/
-export default ({ mode }) => {
+export default ({ mode }: ConfigEnv): UserConfig => {
   AddSecret('')
   const NODE_ENV = mode || 'development'
   const envFiles = [`.env.${NODE_ENV}`]
@@ -25,7 +27,7 @@ export default ({ mode }) => {
 
   viteLogo(process.env)
 
-  const timestamp = Date.parse(new Date())
+  const timestamp = Date.now()
 
   const optimizeDeps = {}
 
@@ -48,7 +50,7 @@ export default ({ mode }) => {
   const root = "./"
   const outDir = "dist"
 
-  const config = {
+  const config: UserConfig = {
     base: base, // 编译后js导入的资源路径
     root: root, // index.html文件所在位置
     publicDir: 'public', // 静态资源文件夹
@@ -61,18 +63,18 @@ export default ({ mode }) => {
     css: {
       preprocessorOptions: {
         scss: {
-          api: 'modern-compiler' // or "modern"
+          api: 'modern-compiler' as const
         }
       }
     },
     server: {
       // 如果使用docker-compose开发模式，设置为false
       open: true,
-      port: process.env.VITE_CLI_PORT,
+      port: Number(process.env.VITE_CLI_PORT),
       proxy: {
         // 把key的路径代理到target位置
         // detail: https://cli.vuejs.org/config/#devserver-proxy
-        [process.env.VITE_BASE_API]: {
+        [process.env.VITE_BASE_API as string]: {
           // 需要代理的路径   例如 '/api'
           target: `${process.env.VITE_BASE_PATH}:${process.env.VITE_SERVER_PORT}/`, // 代理到 目标路径
           changeOrigin: true,
@@ -99,7 +101,7 @@ export default ({ mode }) => {
     optimizeDeps,
     plugins: [
       process.env.VITE_POSITION === 'open' &&
-        vueDevTools({ launchEditor: process.env.VITE_EDITOR }),
+      vueDevTools({ launchEditor: process.env.VITE_EDITOR }),
       legacyPlugin({
         targets: [
           'Android > 39',
@@ -111,7 +113,16 @@ export default ({ mode }) => {
         ]
       }),
       vuePlugin(),
-      svgBuilder(['./src/plugin/','./src/assets/icons/'],base, outDir,'assets', NODE_ENV),
+      AutoImport({
+        include: [
+          /\.[tj]sx?$/, // .ts, .tsx, .js, .jsx
+          /\.vue$/,
+          /\.vue\?vue/, // .vue
+          /\.vue\.[tj]sx?\?vue/, // .vue (vue-loader with experimentalInlineMatchResource enabled)
+        ],
+        imports: ['vue', 'vue-router', 'pinia']
+      }),
+      svgBuilder(['./src/plugin/', './src/assets/icons/'], base, outDir, 'assets', NODE_ENV),
       [Banner(`\n Build based on gin-vue-admin \n Time : ${timestamp}`)],
       VueFilePathPlugin('./src/pathInfo.json'),
       UnoCSS()

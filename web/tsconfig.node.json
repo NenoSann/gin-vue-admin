@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "esModuleInterop": true
+  },
+  "include": [
+    "vite.config.ts",
+    "uno.config.js",
+    "babel.config.js",
+    "eslint.config.mjs",
+    "vitePlugin/**/*.ts",
+    "vitePlugin/**/*.js"
+  ]
+}

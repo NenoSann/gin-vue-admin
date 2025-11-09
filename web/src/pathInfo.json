@@ -1,4 +1,6 @@
 {
+  "/src/view/FIT/load-file/load-file.vue": "LoadFile",
+  "/src/view/FIT/view-track/view-track.vue": "ViewTrack",
   "/src/view/about/index.vue": "About",
   "/src/view/dashboard/components/banner.vue": "Banner",
   "/src/view/dashboard/components/card.vue": "Card",
